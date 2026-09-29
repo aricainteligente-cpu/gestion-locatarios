@@ -1,0 +1,8 @@
+import { createClient } from '@/lib/supabase/server'
+import ActivateForm from './ActivateForm'
+export default async function LocatariosPage() {
+  const supabase = await createClient()
+  const { data: pending } = await supabase.from('profiles').select('*').eq('role', 'pending').order('created_at', { ascending: false })
+  const { data: locatarios } = await supabase.from('profiles').select('*').eq('role', 'locatario').order('local_number')
+  return (<div><h1 className="text-3xl font-bold mb-6">Gestión de Locatarios</h1><section className="mb-8"><h2 className="text-xl font-semibold mb-3 text-yellow-700">Cuentas registradas por asignar ({pending?.length ?? 0})</h2>{pending?.length === 0 ? (<p className="text-gray-500">No hay cuentas pendientes.</p>) : (<div className="space-y-3">{pending?.map((p) => <ActivateForm key={p.id} profile={p} />)}</div>)}</section><section><h2 className="text-xl font-semibold mb-3">Locatarios activos ({locatarios?.length ?? 0})</h2><div className="card overflow-x-auto"><table className="w-full text-sm"><thead className="text-left border-b"><tr><th className="py-2">Nombre</th><th>Correo</th><th>Local</th><th>Contacto</th></tr></thead><tbody>{locatarios?.map((l) => (<tr key={l.id} className="border-b last:border-0"><td className="py-2">{l.full_name ?? '—'}</td><td>{l.email}</td><td>{l.local_number ?? '—'}</td><td>{l.contact_phone ?? '—'}</td></tr>))}</tbody></table></div></section></div>)
+}

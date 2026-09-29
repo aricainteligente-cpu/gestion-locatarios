@@ -1,0 +1,5 @@
+export type Role = 'admin' | 'locatario' | 'pending'
+export interface Profile { id: string; email: string; full_name: string | null; local_number: string | null; contact_phone: string | null; role: Role; assigned: boolean; created_at: string }
+export interface Document { id: string; user_id: string; file_name: string; file_url: string; file_size: number | null; mime_type: string | null; description: string | null; created_at: string; profile?: Profile }
+export interface Payment { id: string; user_id: string; amount: number; concept: string; period: string; status: 'pendiente' | 'pagado' | 'vencido'; due_date: string | null; paid_at: string | null; notes: string | null; created_at: string; profile?: Profile }
+export interface Message { id: string; user_id: string; subject: string; body: string; is_read: boolean; created_at: string; profile?: Profile }
