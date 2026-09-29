@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
-export async function login(formData: FormData) {
+export async function login(formData: FormData): Promise<void> {
   const supabase = await createClient()
 
   const email = formData.get('email') as string
@@ -19,7 +19,7 @@ export async function login(formData: FormData) {
 
   if (error) {
     console.log('❌ Error de auth:', error.message)
-    return { error: error.message }
+        redirect('/login?message=' + encodeURIComponent('Error: ' + error.message))
   }
 
   console.log('✅ Auth exitoso, user ID:', authData.user?.id)
@@ -28,7 +28,7 @@ export async function login(formData: FormData) {
 
   if (!user) {
     console.log('❌ No se pudo obtener el usuario')
-    return { error: 'No se pudo obtener el usuario' }
+  redirect('/login?message=' + encodeURIComponent('No se pudo obtener el usuario'))
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -39,8 +39,7 @@ export async function login(formData: FormData) {
 
   if (profileError) {
     console.log('❌ Error al consultar perfil:', profileError.message)
-    return { error: 'Error al consultar perfil: ' + profileError.message }
-  }
+    redirect('/login?message=' + encodeURIComponent('Error al consultar perfil: ' + profileError.message))
 
   console.log('👤 Perfil encontrado, role:', profile?.role)
 
@@ -72,8 +71,7 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
-  }
+    redirect('/login?message=' + encodeURIComponent('Error: ' + error.message))
 
   revalidatePath('/', 'layout')
   redirect('/login?message=Registro exitoso. Espera la activación del administrador.')
