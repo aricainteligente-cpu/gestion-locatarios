@@ -1,8 +1,94 @@
 import { createClient } from '@/lib/supabase/server'
-import ActivateForm from './ActivateForm'
+import Link from 'next/link'
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
+
 export default async function LocatariosPage() {
   const supabase = await createClient()
-  const { data: pending } = await supabase.from('profiles').select('*').eq('role', 'pending').order('created_at', { ascending: false })
-  const { data: locatarios } = await supabase.from('profiles').select('*').eq('role', 'locatario').order('local_number')
-  return (<div><h1 className="text-3xl font-bold mb-6">Gestión de Locatarios</h1><section className="mb-8"><h2 className="text-xl font-semibold mb-3 text-yellow-700">Cuentas registradas por asignar ({pending?.length ?? 0})</h2>{pending?.length === 0 ? (<p className="text-gray-500">No hay cuentas pendientes.</p>) : (<div className="space-y-3">{pending?.map((p) => <ActivateForm key={p.id} profile={p} />)}</div>)}</section><section><h2 className="text-xl font-semibold mb-3">Locatarios activos ({locatarios?.length ?? 0})</h2><div className="card overflow-x-auto"><table className="w-full text-sm"><thead className="text-left border-b"><tr><th className="py-2">Nombre</th><th>Correo</th><th>Local</th><th>Contacto</th></tr></thead><tbody>{locatarios?.map((l) => (<tr key={l.id} className="border-b last:border-0"><td className="py-2">{l.full_name ?? '—'}</td><td>{l.email}</td><td>{l.local_number ?? '—'}</td><td>{l.contact_phone ?? '—'}</td></tr>))}</tbody></table></div></section></div>)
+
+  // Obtener todos los locatarios
+  const { data: locatarios, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('role', 'locatario')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error al obtener locatarios:', error)
+  }
+
+  return (
+    <div>
+      {/* Header con botón de volver */}
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/admin" className="text-blue-600 hover:text-blue-800">
+          <ArrowLeft size={24} />
+        </Link>
+        <h1 className="text-3xl font-bold">Gestión de Locatarios</h1>
+      </div>
+
+      {/* Tabla de locatarios */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        {locatarios && locatarios.length > 0 ? (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Local
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Creado
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {locatarios.map((locatario: any) => (
+                <tr key={locatario.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {locatario.email || 'Sin email'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {locatario.local_number || 'Sin local'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      {locatario.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(locatario.created_at).toLocaleDateString('es-AR')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button className="text-blue-600 hover:text-blue-900 mr-3">
+                      <Edit size={18} />
+                    </button>
+                    <button className="text-red-600 hover:text-red-900">
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="p-6 text-center text-gray-500">
+            No hay locatarios registrados aún.
+          </div>
+        )}
+      </div>
+
+      {/* Resumen */}
+      <div className="mt-4 text-sm text-gray-600">
+        Total: {locatarios?.length || 0} locatarios activos
+      </div>
+    </div>
+  )
 }
