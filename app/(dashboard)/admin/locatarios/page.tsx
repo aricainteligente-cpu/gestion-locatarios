@@ -1,66 +1,18 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, XCircle } from 'lucide-react'
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
 
-export default function PendientesPage() {
-  const [pendientes, setPendientes] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+export default async function LocatariosPage() {
+  const supabase = await createClient()
 
-  useEffect(() => {
-    loadPendientes()
-  }, [])
+  const { data: locatarios, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('role', 'locatario')
+    .order('created_at', { ascending: false })
 
-  async function loadPendientes() {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'pending')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Error al cargar pendientes:', error)
-    } else {
-      setPendientes(data || [])
-    }
-    setLoading(false)
-  }
-
-  async function activarLocatario(id: string) {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: 'locatario' })
-      .eq('id', id)
-
-    if (error) {
-      alert('Error al activar: ' + error.message)
-    } else {
-      alert('¡Locatario activado exitosamente!')
-      loadPendientes()
-    }
-  }
-
-  async function rechazarLocatario(id: string) {
-    if (!confirm('¿Estás seguro de rechazar este registro?')) return
-
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      alert('Error al rechazar: ' + error.message)
-    } else {
-      alert('Registro eliminado')
-      loadPendientes()
-    }
-  }
-
-  if (loading) {
-    return <div className="p-8 text-center">Cargando...</div>
+  if (error) {
+    console.error('Error al obtener locatarios:', error)
   }
 
   return (
@@ -69,42 +21,46 @@ export default function PendientesPage() {
         <Link href="/admin" className="text-blue-600 hover:text-blue-800">
           <ArrowLeft size={24} />
         </Link>
-        <h1 className="text-3xl font-bold">Cuentas Pendientes</h1>
+        <h1 className="text-3xl font-bold">Gestión de Locatarios</h1>
       </div>
 
-      {pendientes.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <h2 className="text-xl font-semibold text-gray-700">¡No hay cuentas pendientes!</h2>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        {locatarios && locatarios.length > 0 ? (
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Local</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Creado</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {pendientes.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">{p.email || 'Sin email'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{p.local_number || 'Sin local'}</td>
+              {locatarios.map((locatario: any) => (
+                <tr key={locatario.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm text-gray-900">{locatario.email || 'Sin email'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{locatario.local_number || 'Sin local'}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 inline-flex text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      {locatario.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{new Date(locatario.created_at).toLocaleDateString('es-AR')}</td>
                   <td className="px-6 py-4 text-right text-sm font-medium">
-                    <button onClick={() => activarLocatario(p.id)} className="text-green-600 hover:text-green-900 mr-4">
-                      Activar
-                    </button>
-                    <button onClick={() => rechazarLocatario(p.id)} className="text-red-600 hover:text-red-900">
-                      Rechazar
-                    </button>
+                    <button className="text-blue-600 hover:text-blue-900 mr-3"><Edit size={18} /></button>
+                    <button className="text-red-600 hover:text-red-900"><Trash2 size={18} /></button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        ) : (
+          <div className="p-6 text-center text-gray-500">No hay locatarios registrados aún.</div>
+        )}
+      </div>
+
+      <div className="mt-4 text-sm text-gray-600">Total: {locatarios?.length || 0} locatarios activos</div>
     </div>
   )
 }

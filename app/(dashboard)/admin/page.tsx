@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
-  
+
   const [{ count: totalLocatarios }, { count: pending }, { count: unpaidPayments }, { count: unreadMessages }] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'locatario'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'pending'),
@@ -25,7 +25,7 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
           <Link key={stat.label} href={stat.href} className="block">
-            <div className="card flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer">
               <div className={stat.color + ' text-white p-3 rounded-lg'}>
                 <stat.icon size={24} />
               </div>
